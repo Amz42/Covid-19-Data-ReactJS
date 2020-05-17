@@ -14,7 +14,7 @@ ReactDOM.render(
   document.getElementById('root')
 );
 
-
+console.clear();
 
 
 

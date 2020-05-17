@@ -78,9 +78,11 @@ class App extends Component{
         case "10": month = "Oct"; break;
         case "11": month = "Nov"; break;
         case "12": month = "Dec"; break;
+        default : month = "Jan";
       }
       d = month+" "+d[2];
       dates = [...dates, d];
+      return obj;
     });
 
     // console.log("active ", active_cases);
@@ -162,6 +164,7 @@ class App extends Component{
           }]
       }
     });
+    console.clear();
     // HighCharts Code ends here
   }
 
@@ -174,7 +177,7 @@ class App extends Component{
     fetch(`https://api.covid19api.com/total/country/${country}`, requestOptions)
       .then(response => response.text())
       .then(result => {
-        console.log(result);
+        // console.log(result);
         this.setState({data: JSON.parse(result)});
         try{
           document.getElementById("country-selector").disable=false;
@@ -189,7 +192,7 @@ class App extends Component{
   
 
   render(){
-
+    console.clear();
     return (
       <React.Fragment>
         <div className="container">
@@ -208,10 +211,10 @@ class App extends Component{
 
         <div className="container-fluid">
           <div className="row">
-            { !(this.state.data==false) &&
+            { !(this.state.data===false) &&
               <Chart id="chart"/>
             }
-            { this.state.data==false &&
+            { this.state.data===false &&
                 <div className="card bg-light mb-3 mx-auto mt-5 col-lg-6" style={{maxWidth:"18rem"}}>
                   <div className="card-body">
                     <h5 className="card-title" align="center">No Data to Display</h5>

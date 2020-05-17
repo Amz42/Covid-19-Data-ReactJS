@@ -22,7 +22,7 @@ h1{
   body {
     background-image: url("./vertical_bg.jpg");
     background-repeat: repeat-y;
-    background-position: center;
+    background-position: fixed;
   }
   h1{
     color: white;
