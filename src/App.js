@@ -38,6 +38,8 @@ class App extends Component{
       states_active = [...states_active,obj.totalInfected];
       states_recovered = [...states_recovered,obj.recovered];
       states_deaths = [...states_deaths,obj.deceased];
+
+      return obj;
     });
 
     Highcharts.chart('india-states-barchart', {
