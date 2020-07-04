@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import SelectCountry from './components/SelectCountry';
 import Title from './components/Title';
 import Chart from './components/Chart';
+import Loader from './components/Loader';
 import Highcharts from 'highcharts';
 
 
@@ -15,6 +16,10 @@ class App extends Component{
       selectedCountry: "india",
       loading: true,
       IndiaData: undefined,
+      BACKEND: "https://covid19-data-analysis.herokuapp.com",//"http://localhost:8000",
+      agedata: undefined,
+      zone_data: undefined,
+      prediction: undefined,
     }
   }
 
@@ -22,6 +27,246 @@ class App extends Component{
     this.getData();
     this.getCountries();
     this.getIndiaStatus();
+    this.getAgeDeatils();
+    this.getZoneData();
+    this.getPredictionData();
+  }
+
+  getPredictionData = async () =>{
+    var myHeaders = new Headers();
+    var requestOptions = {method: 'GET',headers: myHeaders,redirect: 'follow'};
+
+    fetch(this.state.BACKEND+"/api/india_prediction", requestOptions)
+    .then(response => response.text())
+    .then(result =>{ 
+      this.setState({prediction: JSON.parse(result)});
+      this.PlotPredictionChart();
+    })
+    .catch(error => console.log('error', error));
+  }
+
+  getZoneData = async () => {
+    var myHeaders = new Headers();
+    var requestOptions = {method: 'GET',headers: myHeaders,redirect: 'follow'};
+
+    fetch(this.state.BACKEND+"/api/zone", requestOptions)
+    .then(response => response.text())
+    .then(result =>{ 
+      this.setState({zone_data: JSON.parse(result)});
+      this.PlotZoneChart();
+    })
+    .catch(error => console.log('error', error));
+  }
+
+  getAgeDeatils = async () => {
+    var myHeaders = new Headers();
+    //myHeaders.append("Cookie", "csrftoken=FVHUXRMkIoNDNWTAUEnPvjbcApCmu15gib2KuuvC6EoAMndxxyS7wqgf8JwTjSxF");
+    var requestOptions = {method: 'GET',headers: myHeaders,redirect: 'follow'};
+
+    fetch(this.state.BACKEND+"/api/age-group", requestOptions)
+    .then(response => response.text())
+    .then(result =>{ 
+      this.setState({agedata: JSON.parse(result)});
+      this.PlotAgePieChart();
+    })
+    .catch(error => console.log('error', error));
+  }
+
+  PlotPredictionChart = () =>{
+    let data = this.state.prediction;
+    let p_confirmed = data.Predicted_Confirmed;
+    let p_death = data.Predicted_Deaths;
+    let dates = data.Date;
+
+    for(let i=0;i<dates.length;i++){
+      let d = dates[i].split("T")[0].split("-");
+      let month;
+      switch (d[1]){
+        case "01": month = "Jan"; break;
+        case "02": month = "Feb"; break;
+        case "03": month = "Mar"; break;
+        case "04": month = "Apr"; break;
+        case "05": month = "May"; break;
+        case "06": month = "June"; break;
+        case "07": month = "July"; break;
+        case "08": month = "Aug"; break;
+        case "09": month = "Sep"; break;
+        case "10": month = "Oct"; break;
+        case "11": month = "Nov"; break;
+        case "12": month = "Dec"; break;
+        default : month = "Jan";
+      }
+      dates[i] = month+" "+d[2];
+    }
+    
+    Highcharts.chart('india-prediction', {
+      chart:{
+        type: "spline",
+        backgroundColor: "rgba(255,255,255,0.9)",
+        color: "black",
+        font: 'bold',
+      },
+      title: {
+        text: 'Covid-19 Confirmed Cases Prediction India using Machine Learning',
+        font: 'bold',
+      },
+      subtitle: {
+        text: "These predictions are based on the live data from api & are predicted using Polynomial Regression."
+      },
+      yAxis: {
+        title: {text: 'Number of People'}
+      },
+      xAxis: {
+        categories: dates,
+        title: {text: '<b>Dates (Year: 2020-21)</b>'}
+      },
+      // legend: {
+      //   layout: 'vertical',
+      //   align: 'right',
+      //   verticalAlign: 'top'
+      // },
+      plotOptions: {
+        series: {
+          label: {connectorAllowed: false},
+          pointStart: 1
+        }
+      },
+      colors : ["red", "black"],
+      series:[{
+        name: 'Predicted Confirmed',
+        data: p_confirmed
+      } //,{name: 'Predicted Deaths',data: p_death}
+      ],
+      responsive: {
+          rules: [{
+            condition: {maxWidth: 500},
+            chartOptions: {
+              legend: {
+                layout: 'horizontal',
+                align: 'center',
+                verticalAlign: 'bottom'
+              }
+            }
+          }]
+      }
+    });
+
+  }
+
+  PlotZoneChart = () => {
+    let data = this.state.zone_data;
+    let zone_states = data.State;
+    let Red = data.Red;
+    let Orange = data.Orange;
+    let Green = data.Green;
+
+    Highcharts.chart('india-zones-barchart', {
+      chart: {
+        type: 'column',
+        backgroundColor: "rgba(255,255,255,0.9)",
+        color: "black",
+        font: 'bold',
+      },
+      title: {
+        text: 'Zones in Each State in India'
+      },
+      xAxis: {
+        categories: zone_states
+      },
+      yAxis: {
+        min: 0,
+        title: {
+          text: 'No. of Zones'
+        },
+        stackLabels: {
+          enabled: true,
+          style: {
+            fontWeight: 'bold',
+            color: ( // theme
+              Highcharts.defaultOptions.title.style &&
+              Highcharts.defaultOptions.title.style.color
+            ) || 'gray'
+          }
+        }
+      },
+      legend: {
+        align: 'right',
+        x: -30,
+        verticalAlign: 'top',
+        y: 25,
+        floating: true,
+        backgroundColor:
+          Highcharts.defaultOptions.legend.backgroundColor || 'white',
+        borderColor: '#CCC',
+        borderWidth: 1,
+        shadow: false
+      },
+      tooltip: {
+        headerFormat: '<b>{point.x}</b><br/>',
+        pointFormat: '{series.name}: {point.y}<br/>Total: {point.stackTotal}'
+      },
+      plotOptions: {
+        column: {
+          stacking: 'normal',
+          dataLabels: {
+            enabled: true
+          }
+        }
+      },
+      colors: ['red','green','orange'],
+      series: [ {name:'Red',data:Red}, {name:'Green',data:Green}, {name: 'Orange',data: Orange} ]
+    });
+  }
+
+  PlotAgePieChart = () => {
+    let agegroups = this.state.agedata.AgeGroup;
+    let perc = this.state.agedata.Percentage;
+    let data = [];
+    //let explode = ['false','false','false','false','false','false','false','false','false','false'];
+
+    for(let i=0;i<perc.length;i++){
+      let obj = {};
+      obj.name = agegroups[i];
+      if(i!==9) obj.name += ' years';
+      obj.y = perc[i];
+      //obj.sliced = explode[i];
+      data = [...data,obj];
+    }
+
+    Highcharts.chart('age-group-india', {
+      chart: {
+        plotBackgroundColor: null,
+        plotBorderWidth: null,
+        plotShadow: false,
+        type: 'pie',
+        backgroundColor: "rgba(255,255,255,0.87)",
+        color: "black",
+        font: 'bold',
+      },
+      title: {text: 'Covid-19 Cases India Age-wise Distribution'},
+      tooltip: {
+        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+      },
+      accessibility: {
+        point: {valueSuffix: '%'}
+      },
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+          }
+        }
+      },
+      series: [{
+        name: 'Percentage',
+        colorByPoint: true,
+        data: data
+      }]
+    });
+
   }
 
   PlotIndiaStatesBarChart = () =>{
@@ -191,11 +436,6 @@ class App extends Component{
     deceased_cases = this.DataCleaner(deceased_cases);
     active_cases = this.DataCleaner(active_cases);
 
-    // console.log("active ", active_cases);
-    // console.log("deceased ", deceased_cases);
-    // console.log("confirmed ", confirmed_cases);
-    // console.log("recovered ", recovered_cases);
-
     let country = this.state.selectedCountry;
     country = country.charAt(0).toUpperCase() + country.slice(1);
 
@@ -270,7 +510,8 @@ class App extends Component{
           }]
       }
     });
-    console.clear();
+    //console.clear();
+
     // HighCharts Code ends here
   }
 
@@ -298,7 +539,7 @@ class App extends Component{
   
 
   render(){
-    console.clear();
+    //console.clear();
     return (
       <React.Fragment>
         <div className="container-fluid">
@@ -314,7 +555,7 @@ class App extends Component{
           <div className="row">
             
             {/* All Countries Data */}
-            <div className="col-lg-9 col-xs-12 col-md-10 col-sm-12 mx-auto">
+            <div className="col-lg-8 col-xs-12 col-md-10 col-sm-12 mx-auto">
               <SelectCountry countries={this.state.countries} countrySelector={this.countrySelector} />
 
               { !(this.state.data===false) &&
@@ -331,18 +572,18 @@ class App extends Component{
             </div>
 
             {/* India Data */}
-            <div className="col-lg-3">
+            <div className="col-lg-4">
               <div className="" align="center" id="india-heading">
                 <h2 id="india-heading"> India Live Status</h2>
                 {
                   this.state.IndiaData &&
-                  <table className="mt-5" align="center">
+                  <table className="mt-1" align="center">
                     <tbody>
                       <tr>
                         {/* Confirmed Cases */}
                         <td>
                           <div className="card text-white bg-danger mb-1 mr-1" style={{ maxWidth: "18rem", }} >
-                            <div className="card-header"> Confirmed Cases </div>
+                            <div className="card-header"> Confirmed </div>
                             <div className="card-body">
                               <h5 className="card-title mt-1" align="center"> {this.state.IndiaData.totalCases} </h5>
                             </div>
@@ -350,19 +591,17 @@ class App extends Component{
                         </td>
                         {/* Active Cases */}
                         <td>
-                          <div className="card text-white bg-warning mb-1" style={{ maxWidth: "18rem", }} >
-                            <div className="card-header"> Active Cases </div>
+                          <div className="card text-white bg-warning mb-1 mr-1" style={{ maxWidth: "18rem", }} >
+                            <div className="card-header"> Active </div>
                             <div className="card-body">
                               <h5 className="card-title mt-1" align="center"> {this.state.IndiaData.activeCases} </h5>
                             </div>
                           </div>
                         </td>
-                      </tr>
-                      <tr>
                         {/* Recovered Cases */}
                         <td>
                           <div className="card text-white bg-success mb-1 mr-1" style={{ maxWidth: "18rem", }} >
-                            <div className="card-header"> Total Recovered </div>
+                            <div className="card-header"> Recovered </div>
                             <div className="card-body">
                               <h5 className="card-title mt-1" align="center"> {this.state.IndiaData.recovered} </h5>
                             </div>
@@ -371,7 +610,7 @@ class App extends Component{
                         {/* Death Cases */}
                         <td>
                           <div className="card text-white bg-dark mb-1" style={{ maxWidth: "18rem", }} >
-                            <div className="card-header"> Total Deaths </div>
+                            <div className="card-header"> Deaths </div>
                             <div className="card-body">
                               <h5 className="card-title mt-1" align="center"> {this.state.IndiaData.deaths} </h5>
                             </div>
@@ -382,16 +621,47 @@ class App extends Component{
                   </table>
                 }
               </div>
+              
+              {/* Age-Group-PieChart */}
+              <div id="age-group-india">
+                <Loader />
+              </div>
             </div>
 
           </div>
 
         </div>
 
+        <hr className="hr"/>
+
         {/* Indian States Data */}
         <div className="container-fluid">
           <div className="row">    
-            <div className="col-lg-12 col-md-12 col-sm-12 col-xs-12 mx-auto mb-3" id="india-states-barchart"></div>
+            <div className="col-lg-12 col-md-12 col-sm-12 col-xs-12 mb-3" id="india-states-barchart">
+              <Loader />
+            </div>
+          </div>
+        </div>
+
+        <hr className="hr"/>
+
+        {/* Indian Zones Data */}
+        <div className="container-fluid">
+          <div className="row">
+            <div className="col-lg-12 col-md-12 col-sm-12 col-xs-12 mb-3" id="india-zones-barchart">
+              <Loader />
+            </div>
+          </div>
+        </div>
+
+        <hr className="hr"/>
+
+        {/* Predicted Indian Data */}
+        <div className="container-fluid">
+          <div className="row">
+            <div className="col-lg-12 col-md-12 col-sm-12 col-xs-12 mb-3" id="india-prediction">
+              <Loader />
+            </div>
           </div>
         </div>
 

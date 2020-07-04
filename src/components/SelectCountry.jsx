@@ -4,7 +4,7 @@ function SelectCountry({countries,countrySelector}){
     return (
         <React.Fragment>
             {   countries &&    
-                <div className="input-group mb-1 mt-1">
+                <div className="input-group mb-3 mt-5">
                 <div className="input-group-prepend">
                     <label className="input-group-text" >Country</label>
                 </div>

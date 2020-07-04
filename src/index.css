@@ -36,3 +36,15 @@ h1{
 .card-body{
   padding: 0px !important;
 }
+
+.hr{
+  color: white;
+  background-color: white;
+}
+
+.loader-div{
+  height: 100%;
+  width: 100%;
+  align-items: center !important;
+  align-self: center !important;
+}

@@ -4,7 +4,7 @@ function Chart({id}){
     return (
         <React.Fragment>
             {/* col-lg-8 col-md-12 col-xs-12 col-sm-12 */}
-            <div className=" mt-3 mb-3" id={id} align="center">
+            <div className=" mt-5 mb-3" id={id} align="center">
 
                 {/* loader */}
                 <svg className="mt-5" width="200" height="200" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" stroke="#fff">
