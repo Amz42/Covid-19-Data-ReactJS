@@ -75,7 +75,7 @@ class App extends Component{
   PlotPredictionChart = () =>{
     let data = this.state.prediction;
     let p_confirmed = data.Predicted_Confirmed;
-    let p_death = data.Predicted_Deaths;
+    //let p_death = data.Predicted_Deaths;
     let dates = data.Date;
 
     for(let i=0;i<dates.length;i++){
