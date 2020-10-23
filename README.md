@@ -9,3 +9,5 @@
 
 
 See the project at:	https://covid19-data-analysis.netlify.app/
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/25369ed5-1c53-4f6d-9931-485a1881f6db/deploy-status)](https://app.netlify.com/sites/covid19-data-analysis/deploys)
